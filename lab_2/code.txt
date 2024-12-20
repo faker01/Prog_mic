@@ -1,0 +1,91 @@
+#include <SPI.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BMP280.h>
+#include <RTClib.h>
+#include <DHT.h>
+#include <LiquidCrystal_I2C.h>
+
+// Параметры для DHT22
+#define DHTPIN 2
+#define DHTTYPE DHT22
+
+// Настройки пинов для SPI
+#define BMP_SCK 13
+#define BMP_MISO 12
+#define BMP_MOSI 11
+#define BMP_CS 10
+
+// Объекты для датчиков
+Adafruit_BMP280 bmp(BMP_CS, BMP_MOSI, BMP_MISO, BMP_SCK); // Инициализация BMP280 в режиме SPI
+RTC_DS1307 rtc;                  // RTC DS1307
+DHT dht(DHTPIN, DHTTYPE);        // DHT22
+LiquidCrystal_I2C lcd(0x27, 16, 2); // LCD 16x2, адрес 0x27
+
+void setup() {
+  Serial.begin(9600);
+
+  // Инициализация LCD
+  lcd.begin(16, 2);
+  lcd.backlight();
+  lcd.print("Initializing...");
+
+  // Инициализация DHT22
+  dht.begin();
+
+  // Инициализация BMP280
+  if (!bmp.begin()) {
+    lcd.setCursor(0, 1);
+    lcd.print("BMP280 Error");
+    while (1);
+  }
+
+  // Инициализация RTC
+  if (!rtc.begin()) {
+    lcd.setCursor(0, 1);
+    lcd.print("RTC Error");
+    while (1);
+  }
+
+  if (!rtc.isrunning()) {
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); // Установить текущее время
+  }
+
+  lcd.clear();
+}
+
+void loop() {
+  // Получение данных с датчиков
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+  float pressure = bmp.readPressure() / 100.0F; // Преобразование в гПа
+  DateTime now = rtc.now();
+
+  // Проверка ошибок DHT22
+  if (isnan(temperature) || isnan(humidity)) {
+    lcd.setCursor(0, 0);
+    lcd.print("DHT Error");
+    delay(2000);
+    return;
+  }
+
+  // Вывод данных на LCD
+  lcd.setCursor(0, 0);
+  lcd.print(now.hour());
+  lcd.print(":");
+  lcd.print(now.minute());
+  lcd.setCursor(10, 0);
+  lcd.print("T:");
+  lcd.print(temperature, 1);
+
+
+  lcd.setCursor(0, 1);
+  lcd.print("P:");
+  lcd.print(pressure, 1);
+  lcd.print("hPa");
+  lcd.setCursor(10, 1);
+  lcd.print("C H:");
+  lcd.print(humidity, 1);
+  lcd.print("%");
+
+  delay(2000); // Задержка обновления
+}
