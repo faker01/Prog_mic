@@ -1,0 +1,38 @@
+const int blueLed = 9;    // Пин синего светодиода
+const int redLed = 10;    // Пин красного светодиода
+const int buttonPin = 2;  // Пин кнопки
+
+bool isBlinking = false;  // Флаг для включения/выключения мигалки
+bool buttonState = false; // Текущее состояние кнопки
+bool lastButtonState = false;
+
+void setup() {
+  pinMode(blueLed, OUTPUT);
+  pinMode(redLed, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP); // Включаем встроенный подтягивающий резистор
+}
+
+void loop() {
+  // Считываем состояние кнопки
+  buttonState = !digitalRead(buttonPin); // Инвертируем, так как кнопка подтягивается к VCC
+
+  // Проверяем, было ли нажатие кнопки
+  if (buttonState && !lastButtonState) {
+    isBlinking = !isBlinking; // Переключаем флаг мигалки
+  }
+  lastButtonState = buttonState;
+
+  // Если мигалка включена
+  if (isBlinking) {
+    digitalWrite(blueLed, HIGH);  // Включаем синий светодиод
+    digitalWrite(redLed, LOW);   // Выключаем красный светодиод
+    delay(500);                  // Задержка 500 мс
+    digitalWrite(blueLed, LOW);  // Выключаем синий светодиод
+    digitalWrite(redLed, HIGH);  // Включаем красный светодиод
+    delay(500);                  // Задержка 500 мс
+  } else {
+    // Если мигалка выключена
+    digitalWrite(blueLed, LOW); // Выключаем оба светодиода
+    digitalWrite(redLed, LOW);
+  }
+}
